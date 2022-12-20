@@ -1,0 +1,8 @@
+database:
+  host: localhost
+  user: pcrt_rest
+  password: myDatabasePassword
+  database: repairdatabase
+
+pcrt:
+  url: http://pcrt.mycompany.com
