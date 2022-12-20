@@ -1,0 +1,13 @@
+[Unit]
+Description=Triarom Engineering PCRT REST API Server
+After=network.target
+
+[Service]
+Environment=LISTEN_PORT=3000
+Type=simple
+WorkingDirectory=/var/run/pcrt-rest-api
+ExecStart=/usr/bin/node /var/run/pcrt-rest-api/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
