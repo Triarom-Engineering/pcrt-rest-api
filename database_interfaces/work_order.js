@@ -109,9 +109,9 @@ class WorkOrderInterface {
       "priority": data.pcpriority || null,
       "drop_off_date": new Date(data.dropdate) || null,
       "ready_date": new Date(data.readydate) || null,
-      "collected_date": new Date(data.collecteddate) || null,
+      "collected_date": new Date(data.pickupdate) || null,
       "status": statuses.find((status) => status.id === data.pcstatus),
-      "call_type": call_types[data.calltype] || "Not Specified",
+      "call_type": call_types[data.called] || "Not Specified",
     }
 
     return work_order;
