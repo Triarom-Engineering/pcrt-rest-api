@@ -7,6 +7,35 @@ class CustomerInterface {
     this.database = database;
   }
 
+  async format_customer(customer){
+    // Format a customer object, this is used to convert the customer object from the database into a format that is
+    // suitable for the API.
+    this.logger.debug(`format_customer: ${customer.id} (${customer.name})`);
+    const formatted_customer = {
+      id: customer.pcgroupid || customer.pcid,
+      type: (customer.pcgroupid) ? 'group' : 'asset',
+      name: customer.pcgroupname || customer.pcname,
+      phone: {
+        home: customer.grpphone || customer.pcphone || null,
+        mobile: customer.grpcellphone || customer.pccellphone || null,
+        work: customer.grpworkphone || customer.pcworkphone || null,
+      },
+      email: customer.grpemail || customer.pcemail || null,
+      address: {
+        line_1: customer.grpaddress1 || customer.pcaddress1 || null,
+        line_2: customer.grpaddress2 || customer.pcaddress2 || null,
+        city: customer.grpcity || customer.pccity || null,
+        state: customer.grpstate || customer.pcstate || null,
+        post_code: customer.grpzip || customer.pczip || null,
+      },
+      preferred_contact: customer.grpprefcontact || customer.pcprefcontact || null,
+      notes: customer.grpnotes || customer.pcnotes || null,
+      company: customer.grpcompany || customer.pccompany || null
+    }
+    this.logger.debug(`format_customer: returning ${JSON.stringify(formatted_customer)}`);
+    return formatted_customer;
+  }
+
   async get_customer_by_id(id) {
     // Get a customer by pc_group.pcgroupid, return null if not found.
     const connection = await this.database.get_connection();
@@ -28,26 +57,7 @@ class CustomerInterface {
       this.logger.warn(`get_customer_by_id: multiple results for id ${id}`);
     }
 
-    const customer = {
-      id: data[0].pcgroupid,
-      name: data[0].pcgroupname,
-      phone: {
-        home: data[0].grpphone || null,
-        mobile: data[0].grpcellphone || null,
-        work: data[0].grpworkphone || null,
-      },
-      email: data[0].grpemail || null,
-      address: {
-        line_1: data[0].grpaddress1 || null,
-        line_2: data[0].grpaddress2 || null,
-        city: data[0].grpcity || null,
-        state: data[0].grpstate || null,
-        post_code: data[0].grpzip || null,
-      },
-      preferred_contact: data[0].grpprefcontact || null,
-      notes: data[0].grpnotes || null,
-      company: data[0].grpcompany || null
-    }
+    const customer = await this.format_customer(data[0]);
 
     this.logger.debug(`get_customer_by_id: returning customer ${customer.id} (${customer.name})`);
     await connection.release();
@@ -72,11 +82,13 @@ class CustomerInterface {
       return null;
     }
 
+    let customer;
     if (data[0].pcgroupid === 0) {
       this.logger.debug(`get_customer_by_pc_id: pc ${id} has no group, will use asset rather than group.`);
+      customer = await this.format_customer(data[0]);
     } else {
       this.logger.debug(`resolved pcid ${id} to pcgroupid ${data[0].pcgroupid}, fetching customer`)
-      const customer = await this.get_customer_by_id(data[0].pcgroupid);
+      customer = await this.get_customer_by_id(data[0].pcgroupid);
       await connection.release();
     }
     
