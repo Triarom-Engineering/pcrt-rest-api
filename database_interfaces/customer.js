@@ -72,10 +72,14 @@ class CustomerInterface {
       return null;
     }
 
-    this.logger.debug(`resolved pcid ${id} to pcgroupid ${data[0].pcgroupid}, fetching customer`)
-    const customer = await this.get_customer_by_id(data[0].pcgroupid);
-    await connection.release();
-
+    if (data[0].pcgroupid === 0) {
+      this.logger.debug(`get_customer_by_pc_id: pc ${id} has no group, will use asset rather than group.`);
+    } else {
+      this.logger.debug(`resolved pcid ${id} to pcgroupid ${data[0].pcgroupid}, fetching customer`)
+      const customer = await this.get_customer_by_id(data[0].pcgroupid);
+      await connection.release();
+    }
+    
     return customer;
   }
 
