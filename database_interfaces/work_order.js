@@ -2,6 +2,7 @@
 // Triarom Engineering (c) 2022
 
 import CustomerInterface from './customer.js';
+import RepairCartInterface from './repair_cart.js';
 
 const call_types = {
   1: 'Not Called',
@@ -18,6 +19,7 @@ class WorkOrderInterface {
     this.logger = logger.child({ module: 'WorkOrderInterface' });
     this.database = database;
     this.customerInterface = new CustomerInterface(database, logger);
+    this.repairCartInterface = new RepairCartInterface(database, logger);
   }
 
   async get_work_order_statues() {
@@ -99,6 +101,7 @@ class WorkOrderInterface {
     const customer = await this.customerInterface.get_customer_by_pc_id(data.pcid);
     const notes = await this.get_notes_for_job(data.woid);
     const statuses = await this.get_work_order_statues();
+    const repair_cart = await this.repairCartInterface.get_repair_items_for_work_order(data.woid);
 
     const work_order = {
       "id": data.woid,
@@ -112,6 +115,7 @@ class WorkOrderInterface {
       "collected_date": new Date(data.pickupdate) || null,
       "status": statuses.find((status) => status.id === data.pcstatus),
       "call_type": call_types[parseInt(data.called)] || "Not Specified",
+      "repair_cart": repair_cart || null, 
     }
 
     return work_order;
