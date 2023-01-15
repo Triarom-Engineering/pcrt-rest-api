@@ -38,6 +38,8 @@ class RepairCartInterface {
     this.logger.debug(`get_repair_items_for_work_order: ${work_order_id}`);
     const data = await connection.query(`SELECT * FROM repaircart WHERE pcwo = ?`, [work_order_id]);
 
+    await connection.release();
+
     if (!data) {
       this.logger.warn(`get_repair_items_for_work_order: lookup failed for work order id ${work_order_id}`);
       return null;

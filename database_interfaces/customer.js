@@ -42,6 +42,8 @@ class CustomerInterface {
 
     this.logger.debug(`get_customer_by_id: ${id}`);
     const data = await connection.query(`SELECT * FROM pc_group WHERE pcgroupid = ?`, [id]);
+
+    await connection.release();
     
     if (!data) {
       this.logger.warn(`get_customer_by_id: lookup failed for id ${id}`);
@@ -60,7 +62,6 @@ class CustomerInterface {
     const customer = await this.format_customer(data[0]);
 
     this.logger.debug(`get_customer_by_id: returning customer ${customer.id} (${customer.name})`);
-    await connection.release();
 
     return customer;
   }
@@ -71,6 +72,8 @@ class CustomerInterface {
     this.logger.debug(`get_customer_by_pc_id: ${id}`);
 
     const data = await connection.query(`SELECT * FROM pc_owner WHERE pcid = ?`, [id]);
+
+    await connection.release();
 
     if (!data) {
       this.logger.warn(`get_customer_by_pc_id: lookup failed for id ${id}`);
@@ -89,7 +92,6 @@ class CustomerInterface {
     } else {
       this.logger.debug(`resolved pcid ${id} to pcgroupid ${data[0].pcgroupid}, fetching customer`)
       customer = await this.get_customer_by_id(data[0].pcgroupid);
-      await connection.release();
     }
     
     return customer;

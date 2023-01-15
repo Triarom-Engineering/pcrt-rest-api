@@ -61,6 +61,8 @@ class WorkOrderInterface {
     this.logger.debug(`get_notes_for_job: ${id}`);
     const data = await connection.query(`SELECT * FROM wonotes WHERE woid = ?`, [id]);
 
+    await connection.release();
+
     if (!data) {
       this.logger.warn(`get_notes_for_job: lookup failed for id ${id}`);
       return null;
@@ -90,7 +92,6 @@ class WorkOrderInterface {
         });
       }
     }
-    await connection.release();
 
     return notes;
   }
@@ -165,6 +166,8 @@ class WorkOrderInterface {
     // Find all work orders for these assets
     let data = await connection.query(`SELECT * FROM pc_wo WHERE pcid IN (?)`, [assets.map((asset) => asset.id)]);
 
+    await connection.release();
+
     if (!data) {
       this.logger.warn(`get_work_order_by_customer_id: lookup failed for id ${id}`);
       return null;
@@ -188,7 +191,54 @@ class WorkOrderInterface {
     }
 
     this.logger.debug(`get_work_order_by_customer_id: returning ${work_orders.length} work orders`)
+
+    return work_orders;
+  }
+
+  async get_open_work_orders(status = 'any') {
+    // Get all open work orders, optionally filter by status.
+    // If status is not specified, any work order will be returned.
+
+    const connection = await this.database.get_connection();
+    this.logger.debug(`get_open_work_orders: status: ${status}`);
+    let data = await connection.query(`SELECT * FROM pc_wo WHERE pcstatus != 5`); // TODO: URGENT: change this to use the config.
+
+    if (!data) {
+      this.logger.warn(`get_open_work_orders: no open work orders, lookup failed?`);
+      return [];
+    }
+
     await connection.release();
+
+    if (status !== 'any') {
+      this.logger.debug(`get_open_work_orders: filtering by status ${status}`);
+
+      // Get status ID from get_work_order_status() name
+      const statuses = await this.get_work_order_statues();
+      let status_id;
+      try {
+        status_id = statuses.find((status) => status.name == status).id;
+      } catch (e) {
+        this.logger.error(e);
+        this.logger.warn(`get_open_work_orders: invalid status ${status}`);
+        return null;
+      }
+      data = data.filter((row) => row.pcstatus === status_id);
+    }
+
+    if (data.length === 0) {
+      this.logger.debug(`get_open_work_orders: no open work orders`);
+      return [];
+    }
+
+    let work_orders = [];
+
+    for (const row of data) {
+      this.logger.debug(`get_open_work_orders: formatting work order ${row.woid}`);
+      work_orders.push(await this.format_work_order(row));
+    }
+
+    this.logger.debug(`get_open_work_orders: returning ${work_orders.length} work orders`)
 
     return work_orders;
   }
