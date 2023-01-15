@@ -6,3 +6,6 @@ database:
 
 pcrt:
   url: http://pcrt.mycompany.com
+  work_order:
+    complete_status_id: 5 # This must be set to the correct value, based on boxstyles
+    # TODO: maybe refactor the way this is handled.

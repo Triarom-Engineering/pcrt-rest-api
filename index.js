@@ -13,6 +13,7 @@ import DatabaseInterface from './database_interfaces/db.js';
 // Import router routes
 import CustomerRoutes from './routes/customers.js';
 import WorkOrderRoutes from './routes/work_order.js';
+import WorkOrdersRoutes from './routes/work_orders.js';
 
 // Setup Winston logger
 const logger = winston.createLogger({
@@ -55,7 +56,7 @@ if (!fs.existsSync(config_file_path)) {
 const config = YAML.parse(fs.readFileSync(config_file_path, 'utf8'));
 
 // Verify required settings are present
-const required_config_settings = ["database", "database.host", "database.user", "database.password", "database.database", "pcrt", "pcrt.url"];
+const required_config_settings = ["database", "database.host", "database.user", "database.password", "database.database", "pcrt", "pcrt.url", "pcrt.work_order", "pcrt.work_order.complete_status_id"];
 for (const setting of required_config_settings) {
   if (!setting.split(".").reduce((o, i) => o[i], config)) {
     logger.error(`FATAL: config file ${config_file_path} missing required setting ${setting}`);
@@ -87,10 +88,12 @@ app.use('/api/v1/customer', customer_routes.router);
 
 // Work Orders
 const work_order_routes = new WorkOrderRoutes(logger, database);
+const work_orders_routes = new WorkOrdersRoutes(logger, database);
 app.use('/api/v1/work_order', work_order_routes.router);
+app.use('/api/v1/work_orders', work_orders_routes.router);
 
 // Start server
-const port = process.env.PORT || 3000;
+const port = process.env.LISTEN_PORT || 3000;
 
 app.listen(port, () => {
   logger.info(`server started on port ${port}`);
